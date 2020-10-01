@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Task, User
+from .models import Task, TaskHistory, User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,20 +20,36 @@ class ChoiceField(serializers.ChoiceField):
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    status = ChoiceField(choices=Task.TaskStatus.choices)
+    status = ChoiceField(choices=Task.TaskStatus.choices, required=False)
+
+    def validate(self, data):
+        if self.instance:
+            if (data.get('completion_date') and
+               data['completion_date'] < self.instance.add_date):
+
+                raise serializers.ValidationError(
+                    'Дата завершения не может быть раньше даты создания')
+        else:
+            if (data.get('completion_date') and
+               data['completion_date'] < timezone.now()):
+
+                raise serializers.ValidationError(
+                    'Дата завершения не может быть раньше текущей даты')
+        return data
 
     class Meta:
         fields = (
-            'id', 'title', 'description', 'add_time', 'status',
+            'id', 'title', 'description', 'add_date', 'status',
             'completion_date', )
+
         model = Task
 
-    def validate(self, data):
-        if not data.get('completion_date'):
-            return data
 
-        elif data.get('completion_date') < timezone.now():
-            raise serializers.ValidationError(
-                'Дата выполнения не может быть меньше текущей')
+class TaskHistorySerializer(serializers.ModelSerializer):
+    status = ChoiceField(choices=Task.TaskStatus.choices, required=False)
 
-        return data
+    class Meta:
+        fields = (
+            'title', 'description', 'add_date', 'status',
+            'completion_date', 'edit_time', 'task', )
+        model = TaskHistory
