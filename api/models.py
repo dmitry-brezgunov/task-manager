@@ -6,6 +6,8 @@ User = get_user_model()
 
 
 class AbstractTask(models.Model):
+    '''Базовая модель Задачи с требуемыми полями'''
+
     class TaskStatus(models.TextChoices):
         NEW = 'NEW', _('Новая')
         PLANNED = 'PLANNED', _('Запланированная')
@@ -31,7 +33,13 @@ class AbstractTask(models.Model):
 
 
 class Task(AbstractTask):
+    '''Рабочая модель Задачи наследуемая от базовой с
+    переопределенным сохранением'''
+
     def save(self, *args, **kwargs):
+        '''При сохранении задачи создается ее копия в модели TaskHistory
+        для хранения истории изменений'''
+
         super(Task, self).save(*args, **kwargs)
         TaskHistory.objects.create(
             title=self.title, description=self.description,
@@ -43,6 +51,9 @@ class Task(AbstractTask):
 
 
 class TaskHistory(AbstractTask):
+    '''Модель для хранения истории изменений задачи, наследуется от базовой.
+    Дополнинена ссылкой на рабочую задачу и полем с временем изменения'''
+
     task = models.ForeignKey(
         Task, on_delete=models.CASCADE, related_name='history')
 

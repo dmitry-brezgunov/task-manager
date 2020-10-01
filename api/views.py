@@ -15,6 +15,8 @@ from .serializers import TaskHistorySerializer, TaskSerializer, UserSerializer
 
 
 class UserCreate(APIView):
+    '''View для регистрации пользователей'''
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -26,8 +28,11 @@ class UserCreate(APIView):
 
 
 class TaskViewSet(ModelViewSet):
-    serializer_class = TaskSerializer
+    '''ViewSet для создания, изменения, удаления, просмотра списка задач.
+    Фильтрация, пагинация. Доступно только пользователям с токеном.
+    Возможно просматривать и редактировать только свои задачи'''
 
+    serializer_class = TaskSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ('status', 'completion_date', )
     filterset_class = TasksFilter
@@ -37,14 +42,20 @@ class TaskViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated & TaskPermissions]
 
     def get_queryset(self):
+        '''Вывод списка задач только текущего пользователя'''
+
         user = self.request.user
         return Task.objects.filter(user=user)
 
     def perform_create(self, serializer):
+        '''Добавление текущего пользователя при создании задачи'''
+
         serializer.save(user=self.request.user)
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk):
+        '''Вывод списка с историей изменения задачи'''
+
         task = get_object_or_404(Task, pk=pk, user=request.user)
         task_history = TaskHistory.objects.filter(task=task)
         page = self.paginate_queryset(task_history)

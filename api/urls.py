@@ -8,7 +8,7 @@ router = DefaultRouter()
 router.register('tasks', TaskViewSet, basename='tasks')
 
 urlpatterns = [
-    path('token/', views.obtain_auth_token),
-    path('register/', UserCreate.as_view()),
+    path('token/', views.obtain_auth_token, name='token'),
+    path('register/', UserCreate.as_view(), name='register'),
     path('', include(router.urls))
 ]
