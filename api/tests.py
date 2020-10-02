@@ -118,11 +118,11 @@ class TaskTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['count'], 1)
 
-        response = self.client.get(self.url, {'date_from': '2020-10-01'})
+        response = self.client.get(self.url, {'date_from': '01-10-2020'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['count'], 1)
 
-        response = self.client.get(self.url, {'date_to': '2020-10-01'})
+        response = self.client.get(self.url, {'date_to': '01-10-2020'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['count'], 0)
 
