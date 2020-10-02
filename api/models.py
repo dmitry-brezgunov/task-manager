@@ -52,7 +52,7 @@ class Task(AbstractTask):
 
 class TaskHistory(AbstractTask):
     '''Модель для хранения истории изменений задачи, наследуется от базовой.
-    Дополнинена ссылкой на рабочую задачу и полем с временем изменения'''
+    Дополнена ссылкой на рабочую задачу и полем с временем изменения'''
 
     task = models.ForeignKey(
         Task, on_delete=models.CASCADE, related_name='history')
@@ -60,4 +60,4 @@ class TaskHistory(AbstractTask):
     edit_time = models.DateTimeField('Дата изменения', auto_now_add=True)
 
     class Meta:
-        ordering = ('-edit_time', )
+        ordering = ('-edit_time', '-id', )

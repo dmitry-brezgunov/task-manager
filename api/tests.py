@@ -28,6 +28,11 @@ class AuthTests(APITestCase):
         self.assertEqual(Token.objects.count(), 1)
         self.assertEqual(Token.objects.get().user, user)
 
+    def test_permissions(self):
+        url = '/api/tasks/'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 class TaskTests(APITestCase):
     def setUp(self):
@@ -137,3 +142,21 @@ class TaskTests(APITestCase):
 
         self.assertEqual(
             response.json()['results'][1]['title'], self.data['title'])
+
+    def test_validation(self):
+        wrong_data = self.data.copy()
+        wrong_data['completion_date'] = '25-10-2019 17:30'
+        response = self.client.post(self.url, wrong_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.json()['non_field_errors'][0],
+            'Дата завершения не может быть раньше текущей даты')
+
+        self.client.post(self.url, self.data, format='json')
+        task = Task.objects.get()
+        self.url += f'{task.id}/'
+        response = self.client.patch(self.url, wrong_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.json()['non_field_errors'][0],
+            'Дата завершения не может быть раньше даты создания')
