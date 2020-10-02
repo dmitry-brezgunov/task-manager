@@ -7,33 +7,6 @@ from rest_framework.test import APIClient, APITestCase
 from .models import Task, User
 
 
-class AuthTests(APITestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.data = {'username': 'testuser', 'password': 'testpassword'}
-
-    def test_registration(self):
-        url = reverse('register')
-        response = self.client.post(url, self.data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 1)
-        self.assertEqual(User.objects.get().username, 'testuser')
-
-    def test_token(self):
-        url = reverse('token')
-        user = User.objects.create_user(
-            username=self.data['username'], password=self.data['password'])
-        response = self.client.post(url, self.data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Token.objects.count(), 1)
-        self.assertEqual(Token.objects.get().user, user)
-
-    def test_permissions(self):
-        url = '/api/tasks/'
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-
 class TaskTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
@@ -55,7 +28,7 @@ class TaskTests(APITestCase):
             'status': 'COMPLETED', 'completion_date': '25-10-2020 17:30'
         }
 
-        self.url = '/api/tasks/'
+        self.url = reverse('tasks-list')
 
     def test_task_create(self):
         response = self.client.post(self.url, self.data, format='json')
@@ -75,7 +48,7 @@ class TaskTests(APITestCase):
         task = Task.objects.create(
             title=self.data['title'], description=self.data['description'],
             user=self.user_1)
-        self.url += f'{task.id}/'
+        self.url = reverse('tasks-detail', args=[task.id])
         response = self.client.patch(self.url, self.patch_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -102,7 +75,7 @@ class TaskTests(APITestCase):
         self.assertEqual(response.json()['count'], 1)
         self.assertEquals(response.json()['results'][0]['id'], task_1.id)
 
-        self.url += f'{task_2.id}/'
+        self.url = reverse('tasks-detail', args=[task_2.id])
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -129,19 +102,18 @@ class TaskTests(APITestCase):
     def test_history(self):
         self.client.post(self.url, self.data, format='json')
         task = Task.objects.get()
-        self.url += f'{task.id}/'
+        self.url = reverse('tasks-detail', args=[task.id])
         self.client.patch(self.url, self.patch_data, format='json')
 
-        self.url += 'history/'
+        self.url = reverse('tasks-history', args=[task.id])
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['count'], 2)
 
-        self.assertEqual(
-            response.json()['results'][0]['title'], self.patch_data['title'])
+        results = response.json()['results']
+        self.assertEqual(results[0]['title'], self.patch_data['title'])
 
-        self.assertEqual(
-            response.json()['results'][1]['title'], self.data['title'])
+        self.assertEqual(results[1]['title'], self.data['title'])
 
     def test_validation(self):
         wrong_data = self.data.copy()
@@ -154,7 +126,7 @@ class TaskTests(APITestCase):
 
         self.client.post(self.url, self.data, format='json')
         task = Task.objects.get()
-        self.url += f'{task.id}/'
+        self.url = reverse('tasks-detail', args=[task.id])
         response = self.client.patch(self.url, wrong_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(

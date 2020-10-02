@@ -1,13 +1,10 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
-User = get_user_model()
+from users.models import User
 
 
 class AbstractTask(models.Model):
-    '''Базовая модель Задачи с требуемыми полями'''
-
+    """Базовая модель Задачи с требуемыми полями."""
     class TaskStatus(models.TextChoices):
         NEW = 'NEW', _('Новая')
         PLANNED = 'PLANNED', _('Запланированная')
@@ -33,13 +30,15 @@ class AbstractTask(models.Model):
 
 
 class Task(AbstractTask):
-    '''Рабочая модель Задачи наследуемая от базовой с
-    переопределенным сохранением'''
-
+    """
+    Рабочая модель Задачи наследуемая от базовой с
+    переопределенным сохранением.
+    """
     def save(self, *args, **kwargs):
-        '''При сохранении задачи создается ее копия в модели TaskHistory
-        для хранения истории изменений'''
-
+        """
+        При сохранении задачи создается ее копия в модели TaskHistory
+        для хранения истории изменений.
+        """
         super(Task, self).save(*args, **kwargs)
         TaskHistory.objects.create(
             title=self.title, description=self.description,
@@ -51,11 +50,13 @@ class Task(AbstractTask):
 
 
 class TaskHistory(AbstractTask):
-    '''Модель для хранения истории изменений задачи, наследуется от базовой.
-    Дополнена ссылкой на рабочую задачу и полем с временем изменения'''
-
+    """
+    Модель для хранения истории изменений задачи, наследуется от базовой.
+    Дополнена ссылкой на рабочую задачу и полем с временем изменения.
+    """
     task = models.ForeignKey(
-        Task, on_delete=models.CASCADE, related_name='history')
+        Task, on_delete=models.CASCADE, related_name='history',
+        verbose_name='Задача')
 
     edit_time = models.DateTimeField('Дата изменения', auto_now_add=True)
 
