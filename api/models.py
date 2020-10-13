@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from users.models import User
 
@@ -34,6 +34,7 @@ class Task(AbstractTask):
     Рабочая модель Задачи наследуемая от базовой с
     переопределенным сохранением.
     """
+    @transaction.atomic
     def save(self, *args, **kwargs):
         """
         При сохранении задачи создается ее копия в модели TaskHistory
